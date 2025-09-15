@@ -1,0 +1,15 @@
+cls; dotnet tool install --global dotnet-ef --version 6.0.6
+cls; dotnet ef migrations add "UpdateLogs" --project src\Infrastructure --startup-project src\WebUI --output-dir Persistence\Migrations
+cls; dotnet clean; dotnet build; dotnet run
+cls; remove-Item node_modules, yarn.lock -Recurse
+cls; remove-Item dist, build -Recurse
+cls; remove-Item dist, test -Recurse
+cls; winget update --all --include-unknown
+cls; clear-caches
+cls; clear-history
+cls; notepad $PROFILE
+cls; explorer .
+cls; cd D:\Source\Front\ViveDeTusRentasWeb; yarn start
+cls; cd D:\Source\Back\ViveDeTusRentasAPI\src\WebUI; dotnet clean; dotnet build; dotnet run
+cls; clear-history
+cls; cd D:\Source\Back\ViveDeTusRentasAPI\src\WebUI; dotnet clean; dotnet build; dotnet run
