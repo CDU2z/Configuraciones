@@ -1,5 +1,5 @@
 # Inicializa Oh My Posh con el tema configurado
-oh-my-posh init pwsh --config 'C:/Users/Dan Marquez/AppData/Local/Programs/oh-my-posh/themes/material.omp.json' | Invoke-Expression
+oh-my-posh init pwsh --config "$env:LOCALAPPDATA\Programs\oh-my-posh\themes\material.omp.json" | Invoke-Expression
 
 # Función para verificar si es necesario actualizar Oh My Posh
 function Update-OhMyPoshIfNeeded {
@@ -16,8 +16,87 @@ function Update-OhMyPoshIfNeeded {
     }
 }
 
-# Llama a la función para verificar y actualizar Oh My Posh si es necesario
-Update-OhMyPoshIfNeeded
+# Función para obtener la IP pública
+function my-ip {
+    Invoke-RestMethod -Uri "https://api.ipify.org?format=json"
+}
+
+# Función para obtener la IP pública
+function flushdns {
+    Clear-DnsClientCache
+}
+
+# Test de conectividad mejorado
+function ping-test($host = "google.com") {
+    Test-Connection -ComputerName $host -Count 10
+}
+
+# Función para obtener la IP pública
+function clear-caches {
+    npm cache clean --force
+
+    yarn cache clean
+
+    # dotnet nuget locals all --clear
+
+    # winget cache clean
+}
+
+# Limpiar archivos temporales
+function cleanup {
+    Write-Host "🧹 Limpiando archivos temporales..." -ForegroundColor Cyan
+    
+    # Temp folders
+    Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item "$env:USERPROFILE\AppData\Local\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
+    
+    # Recycle bin
+    Clear-RecycleBin -Force -ErrorAction SilentlyContinue
+    
+    Write-Host "✅ Limpieza completada" -ForegroundColor Green
+}
+
+# Función para obtener la IP pública
+function clear-history {
+    $historyPath = (Get-PSReadLineOption).HistorySavePath
+    notepad $historyPath
+}
+
+# Función para mostrar información del sistema de desarrollo
+function Show-DevEnvironment {
+    Write-Host "`n🔍 Información del Entorno de Desarrollo" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+    
+    # Show all dev tool versions
+    $tools = @(
+        @{Name="Node.js"; Command="node"; Args="-v"; Color="Green"; Icon="🟢"},
+        @{Name="NPM"; Command="npm"; Args="--version"; Color="Red"; Icon="📦"},
+        @{Name="Yarn"; Command="yarn"; Args="-v"; Color="Magenta"; Icon="🧶"},
+        @{Name="fnm"; Command="fnm"; Args="--version"; Color="Yellow"; Icon="📦"},
+        @{Name=".NET SDK"; Command="dotnet"; Args="--version"; Color="Blue"; Icon="🧰"},
+        @{Name="Git"; Command="git"; Args="--version"; Color="DarkMagenta"; Icon="🔗"},
+        @{Name="Python"; Command="python"; Args="--version"; Color="DarkYellow"; Icon="🐍"},
+        @{Name="Oh My Posh"; Command="oh-my-posh"; Args="--version"; Color="DarkCyan"; Icon="🎨"}
+    )
+    
+    foreach ($tool in $tools) {
+        if (Get-Command $tool.Command -ErrorAction SilentlyContinue) {
+            try {
+                $version = & $tool.Command $tool.Args 2>$null
+                if ($version) {
+                    Write-Host "$($tool.Icon) $($tool.Name): $version" -ForegroundColor $tool.Color
+                }
+            }
+            catch {
+                Write-Host "❌ $($tool.Name): Error obteniendo versión" -ForegroundColor Red
+            }
+        } else {
+            Write-Host "❌ $($tool.Name): No disponible" -ForegroundColor DarkRed
+        }
+    }
+    
+    Write-Host "`n"
+}
 
 # Importa el módulo de íconos de terminal
 Import-Module -Name Terminal-Icons
@@ -34,65 +113,8 @@ if (Test-Path($ChocolateyProfile)) {
   Import-Module "$ChocolateyProfile"
 }
 
-# Función para obtener la IP pública
-function my-ip {
-    Invoke-RestMethod -Uri "https://api.ipify.org?format=json"
-}
+# Mostrar información del entorno
+Show-DevEnvironment
 
-function flushdns {
-    Clear-DnsClientCache
-}
-
-function clear-caches {
-    npm cache clean --force
-
-    yarn cache clean
-
-    # dotnet nuget locals all --clear
-
-    # winget cache clean
-}
-
-Write-Host "`n🚀 Iniciando entorno de desarrollo..." -ForegroundColor Cyan
-
-# Mostrar versión de fnm
-try {
-    $fnmVersion = fnm --version
-    Write-Host "📦 fnm activo: $fnmVersion" -ForegroundColor Yellow
-} catch {
-    Write-Host "❌ fnm no está disponible" -ForegroundColor Red
-}
-
-# Mostrar versión de Node.js
-try {
-    $nodeVersion = node -v
-    Write-Host "🟢 Node.js activo: $nodeVersion" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Node.js no está disponible (¿faltó 'fnm use' o fnm env?)" -ForegroundColor Red
-}
-
-# Mostrar versión de Yarn
-try {
-    $yarnVersion = yarn -v
-    Write-Host "🧶 Yarn activo: $yarnVersion" -ForegroundColor Magenta
-} catch {
-    Write-Host "⚠️ Yarn no está disponible" -ForegroundColor DarkRed
-}
-
-# Mostrar versión de .NET SDK
-try {
-    $dotnetVersion = dotnet --version
-    Write-Host "🧰 .NET SDK activo: $dotnetVersion" -ForegroundColor Blue
-} catch {
-    Write-Host "❌ .NET SDK no encontrado" -ForegroundColor Red
-}
-
-# Mostrar versión de Oh My Posh
-try {
-    $ompVersion = oh-my-posh --version
-    Write-Host "🎨 Oh My Posh versión: $ompVersion" -ForegroundColor DarkCyan
-} catch {
-    Write-Host "⚠️ Oh My Posh no está disponible" -ForegroundColor DarkRed
-}
-
-Write-Host "✅ Entorno inicializado correctamente.`n" -ForegroundColor Cyan
+# Llama a la función para verificar y actualizar Oh My Posh si es necesario
+Update-OhMyPoshIfNeeded
