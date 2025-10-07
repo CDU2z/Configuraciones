@@ -7,9 +7,19 @@ cls; remove-Item dist, test -Recurse
 cls; winget update --all --include-unknown
 cls; clear-caches
 cls; clear-history
+cls; cleanup
+cls; flushdns
+cls; Show-DevEnvironment
 cls; notepad $PROFILE
 cls; explorer .
 cls; cd D:\Source\Front\ViveDeTusRentasWeb; yarn start
 cls; cd D:\Source\Back\ViveDeTusRentasAPI\src\WebUI; dotnet clean; dotnet build; dotnet run
-cls; clear-history
-cls; cd D:\Source\Back\ViveDeTusRentasAPI\src\WebUI; dotnet clean; dotnet build; dotnet run
+cls; yarn build
+cls; yarn start
+cls; yarn set version latest
+cls; yarn build:win
+cls; my-ip
+cls; git fetch --prune
+cls; git reset --hard 8b19b276
+cls; git push --force 8b19b276
+cls; go-bios
