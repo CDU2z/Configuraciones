@@ -56,6 +56,11 @@ function cleanup {
     Write-Host "✅ Limpieza completada" -ForegroundColor Green
 }
 
+# Función para ir a la bios
+function go-bios {
+    & "shutdown.exe" @("/r", "/fw", "/t", "1")
+}
+
 # Función para obtener la IP pública
 function clear-history {
     $historyPath = (Get-PSReadLineOption).HistorySavePath
@@ -118,3 +123,5 @@ Show-DevEnvironment
 
 # Llama a la función para verificar y actualizar Oh My Posh si es necesario
 Update-OhMyPoshIfNeeded
+
+
