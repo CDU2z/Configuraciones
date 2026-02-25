@@ -1,78 +1,73 @@
-# Inicializa Oh My Posh con el tema configurado
+# ================================
+# OH MY POSH INITIALIZATION
+# ================================
 oh-my-posh init pwsh --config "$env:LOCALAPPDATA\Programs\oh-my-posh\themes\material.omp.json" | Invoke-Expression
 
-# Función para verificar si es necesario actualizar Oh My Posh
+# ================================
+# AUTO UPDATE OH MY POSH (Safe)
+# ================================
 function Update-OhMyPoshIfNeeded {
-    # Obtener la versión actual de Oh My Posh
-    $currentVersion = oh-my-posh --version
+    try {
+        $currentVersion = oh-my-posh --version
+        $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/JanDeDobbeleer/oh-my-posh/releases/latest" -TimeoutSec 3
+        $latestVersion = $latestRelease.tag_name -replace '^v',''
 
-    # Obtener la última versión desde la API de GitHub
-    $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/JanDeDobbeleer/oh-my-posh/releases/latest"
-    $latestVersion = $latestRelease.tag_name -replace '^v', ''  # Eliminar el prefijo 'v' de la versión
-
-    # Comparar versiones
-    if ($currentVersion -ne $latestVersion) {
-	oh-my-posh upgrade --force
-    }
+        if ($currentVersion -ne $latestVersion) {
+            oh-my-posh upgrade --force
+        }
+    } catch {}
 }
 
-# Función para obtener la IP pública
+# ================================
+# NETWORK UTILITIES
+# ================================
 function my-ip {
     Invoke-RestMethod -Uri "https://api.ipify.org?format=json"
 }
 
-# Función para obtener la IP pública
 function flushdns {
     Clear-DnsClientCache
 }
 
-# Test de conectividad mejorado
 function ping-test($host = "google.com") {
     Test-Connection -ComputerName $host -Count 10
 }
 
-# Función para obtener la IP pública
+# ================================
+# CACHE CLEANING
+# ================================
 function clear-caches {
-    npm cache clean --force
-
-    yarn cache clean
-
-    # dotnet nuget locals all --clear
-
-    # winget cache clean
+    npm cache clean --force 2>$null
+    yarn cache clean 2>$null
 }
 
-# Limpiar archivos temporales
 function cleanup {
     Write-Host "🧹 Limpiando archivos temporales..." -ForegroundColor Cyan
-    
-    # Temp folders
     Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item "$env:USERPROFILE\AppData\Local\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
-    
-    # Recycle bin
     Clear-RecycleBin -Force -ErrorAction SilentlyContinue
-    
     Write-Host "✅ Limpieza completada" -ForegroundColor Green
 }
 
-# Función para ir a la bios
+# ================================
+# SYSTEM UTILITIES
+# ================================
 function go-bios {
-    & "shutdown.exe" @("/r", "/fw", "/t", "1")
+    shutdown.exe /r /fw /t 1
 }
 
-# Función para obtener la IP pública
 function clear-history {
-    $historyPath = (Get-PSReadLineOption).HistorySavePath
-    notepad $historyPath
+    notepad (Get-PSReadLineOption).HistorySavePath
 }
 
-# Función para mostrar información del sistema de desarrollo
+# ================================
+# DEVELOPMENT ENVIRONMENT STATUS
+# ================================
 function Show-DevEnvironment {
+
     Write-Host "`n🔍 Información del Entorno de Desarrollo" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
-    
-    # Show all dev tool versions
+
     $tools = @(
         @{Name="Node.js"; Command="node"; Args="-v"; Color="Green"; Icon="🟢"},
         @{Name="NPM"; Command="npm"; Args="--version"; Color="Red"; Icon="📦"},
@@ -81,9 +76,11 @@ function Show-DevEnvironment {
         @{Name=".NET SDK"; Command="dotnet"; Args="--version"; Color="Blue"; Icon="🧰"},
         @{Name="Git"; Command="git"; Args="--version"; Color="DarkMagenta"; Icon="🔗"},
         @{Name="Python"; Command="python"; Args="--version"; Color="DarkYellow"; Icon="🐍"},
-        @{Name="Oh My Posh"; Command="oh-my-posh"; Args="--version"; Color="DarkCyan"; Icon="🎨"}
+        @{Name="Oh My Posh"; Command="oh-my-posh"; Args="--version"; Color="DarkCyan"; Icon="🎨"},
+        @{Name="Docker"; Command="docker"; Args="--version"; Color="Cyan"; Icon="🐳"},
+        @{Name="WSL"; Command="wsl"; Args="--version"; Color="White"; Icon="🐧"}
     )
-    
+
     foreach ($tool in $tools) {
         if (Get-Command $tool.Command -ErrorAction SilentlyContinue) {
             try {
@@ -91,37 +88,67 @@ function Show-DevEnvironment {
                 if ($version) {
                     Write-Host "$($tool.Icon) $($tool.Name): $version" -ForegroundColor $tool.Color
                 }
-            }
-            catch {
+            } catch {
                 Write-Host "❌ $($tool.Name): Error obteniendo versión" -ForegroundColor Red
             }
         } else {
             Write-Host "❌ $($tool.Name): No disponible" -ForegroundColor DarkRed
         }
     }
-    
+
+    # Docker Engine Status
+    if (Get-Command docker -ErrorAction SilentlyContinue) {
+        try {
+            docker info > $null 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "🚀 Docker Engine: Running" -ForegroundColor Green
+            } else {
+                Write-Host "⚠️ Docker Engine: Installed but not running" -ForegroundColor Yellow
+            }
+        } catch {
+            Write-Host "❌ Docker Engine: Error detecting status" -ForegroundColor Red
+        }
+    }
+
+    # WSL Distros
+    if (Get-Command wsl -ErrorAction SilentlyContinue) {
+        try {
+            $distros = wsl -l -v 2>$null
+            if ($distros) {
+                Write-Host "`n📦 WSL Distros:" -ForegroundColor Gray
+                Write-Host $distros
+            }
+        } catch {}
+    }
+
     Write-Host "`n"
 }
 
-# Importa el módulo de íconos de terminal
-Import-Module -Name Terminal-Icons
+# ================================
+# MODULES
+# ================================
+Import-Module Terminal-Icons -ErrorAction SilentlyContinue
 
-# Configuración de PSReadLine para mostrar predicciones en estilo de lista
+# ================================
+# PSREADLINE CONFIG
+# ================================
 Set-PSReadLineOption -PredictionViewStyle ListView
 
-# Configuración de fnm (Fast Node Manager) para usar en cada cambio de directorio
+# ================================
+# FNM (Node Version Manager)
+# ================================
 fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression
 
-# Carga el perfil de Chocolatey si existe
+# ================================
+# CHOCOLATEY PROFILE
+# ================================
 $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-if (Test-Path($ChocolateyProfile)) {
-  Import-Module "$ChocolateyProfile"
+if (Test-Path $ChocolateyProfile) {
+    Import-Module $ChocolateyProfile
 }
 
-# Mostrar información del entorno
+# ================================
+# STARTUP EXECUTION
+# ================================
 Show-DevEnvironment
-
-# Llama a la función para verificar y actualizar Oh My Posh si es necesario
 Update-OhMyPoshIfNeeded
-
-
